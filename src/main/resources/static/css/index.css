@@ -1,0 +1,47 @@
+body {
+    color: ghostwhite;
+    background: #222222;
+}
+
+hr {
+    color: ghostwhite;
+    border-color: ghostwhite;
+}
+
+#supplies-header-row > th, #supplies-data-row > td {
+    width: 125px;
+}
+
+#supplies-header-row > th {
+    text-align: left;
+    padding: 0.5rem 0.5rem 0.25rem;
+}
+
+#supplies-data-row > td {
+    padding: 0.1rem 0.5rem;
+}
+
+#supplies-data-row > td {
+    text-align: center;
+}
+
+.supply-icon {
+    font-size: 0.92rem;
+    margin-right: 0.4rem;
+}
+
+.progress {
+    position: relative;
+    height: 1.2rem;
+}
+
+.progress > span {
+    color: black !important;
+    width: 100%;
+    font-weight: 700;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}

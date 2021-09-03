@@ -1,0 +1,100 @@
+﻿<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Township</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link th:href="@{/css/index.css}" rel="stylesheet"/>
+    <link th:href="@{/css/all.css}" rel="stylesheet"/>
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" integrity="sha256-qXBd/EfAdjOA2FGrGAG+b3YBn2tn5A6bhz+LSgYD96k=" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/mustache@latest"></script>
+    <script th:src="@{/js/index.js}"></script>
+</head>
+<body>
+<table id="supplies-table">
+    <thead>
+    <tr id="supplies-header-row"></tr>
+    </thead>
+    <tbody>
+    <tr id="supplies-data-row"></tr>
+    </tbody>
+</table>
+<hr/>
+</body>
+</html>
+
+<script type="text/javascript" th:inline="javascript">
+    const supplyPiles = [[${supplyPiles}]]
+
+    $(() => {
+        const $suppliesHeaderRow = $('#supplies-header-row')
+        const $suppliesDataRow = $('#supplies-data-row')
+        const numberFormatter = new Intl.NumberFormat()
+
+        let supplyPileHeaderTemplate = '{{#supplies}}<th><i class="supply-icon {{supply.iconClass}}"></i>{{supply.label}}</th>{{/supplies}}'
+        let supplyPileDataTemplate = '{{#supplies}}<td><div class="progress"><div id="{{supply.label}}-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-info" role="progressbar" aria-valuemin="0" aria-valuemax="{{pileSize}}"></div><span></span></div></td>{{/supplies}}'
+        let iteration = 0
+
+        Mustache.parse(supplyPileHeaderTemplate)
+        Mustache.parse(supplyPileDataTemplate)
+
+        drawBackground()
+        tick()
+        setInterval(tick, 1000)
+
+        function tick() {
+            incrementSupplies()
+            draw()
+            logIteration()
+        }
+
+        function drawBackground() {
+            $suppliesHeaderRow.html(Mustache.render(supplyPileHeaderTemplate, {supplies: supplyPiles}))
+            $suppliesDataRow.html(Mustache.render(supplyPileDataTemplate, {supplies: supplyPiles}))
+        }
+
+        function draw() {
+
+        }
+
+        function logIteration() {
+            iteration++
+            if (iteration % 10 === 0) {
+                console.log(`Iteration: ${iteration}`)
+                console.table(supplyPiles)
+            }
+        }
+
+        function incrementSupplies() {
+            _.each(supplyPiles, (v, i) => {
+                incrementSupplyPileQuantity(v)
+                updateSupplyPileProgressBar(v)
+            })
+        }
+
+        function incrementSupplyPileQuantity(supplyPile) {
+            if (supplyPile.quantity < supplyPile.pileSize) {
+                supplyPile.quantity = _.clamp(supplyPile.quantity + 10, 0, supplyPile.pileSize)
+            }
+        }
+
+        function updateSupplyPileProgressBar(supplyPile) {
+            const $bar = $(`#${supplyPile.supply.label}-progress-bar`)
+            const width = _.round((supplyPile.quantity / supplyPile.pileSize) * 100)
+
+            $bar.css('width', `${width}%`).attr('aria-valuenow', width)
+            $bar.next('span').html(`${numberFormatter.format(supplyPile.quantity)} / ${numberFormatter.format(supplyPile.pileSize)}`)
+
+            if (width === 100) {
+                $bar.removeClass('progress-bar-striped').removeClass('progress-bar-animated').removeClass('bg-info').removeClass('bg-danger').addClass('bg-success')
+            } else if (width <= 10)  {
+                $bar.addClass('progress-bar-striped').addClass('progress-bar-animated').removeClass('bg-info').addClass('bg-danger').removeClass('bg-success')
+            } else {
+                $bar.addClass('progress-bar-striped').addClass('progress-bar-animated').addClass('bg-info').removeClass('bg-danger').removeClass('bg-success')
+            }
+        }
+    })
+</script>

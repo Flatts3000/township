@@ -1,0 +1,23 @@
+[
+  {
+    "order": 0,
+    "label": "Food",
+    "iconClass": "fas fa-bread-slice",
+    "initialQuantity": 50,
+    "initialPileSize": 400
+  },
+  {
+    "order": 1,
+    "label": "Wood",
+    "iconClass": "fas fa-tree",
+    "initialQuantity": 50,
+    "initialPileSize": 400
+  },
+  {
+    "order": 2,
+    "label": "Stone",
+    "iconClass": "fas fa-cubes",
+    "initialQuantity": 0,
+    "initialPileSize": 400
+  }
+]
