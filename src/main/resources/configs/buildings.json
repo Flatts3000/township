@@ -1,0 +1,76 @@
+[
+  {
+    "level": 0,
+    "label": "Tent",
+    "iconClass": "fas fa-campground",
+    "description": "Increases population by 2",
+    "unlocked": true,
+    "costs": [
+      {
+        "supply": "Wood",
+        "iconClass": "fas fa-tree",
+        "quantity": 60
+      }
+    ],
+    "produces": [
+      {
+        "supply": "Population",
+        "quantity": 2
+      }
+    ],
+    "upgrades": [
+      {
+        "level": 1,
+        "label": "House",
+        "iconClass": "fas fa-home",
+        "description": "Increases population by 4",
+        "produces": [
+          {
+            "supply": "Population",
+            "quantity": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "level": 0,
+    "label": "Farm",
+    "iconClass": "fas fa-water",
+    "description": "Produces 1 food",
+    "unlocked": true,
+    "costs": [
+      {
+        "supply": "Wood",
+        "iconClass": "fas fa-tree",
+        "quantity": 60
+      }
+    ],
+    "produces": [
+      {
+        "supply": "Food",
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "level": 0,
+    "label": "Woodcutter",
+    "iconClass": "fas fa-stream",
+    "description": "Produces 1 wood",
+    "unlocked": true,
+    "costs": [
+      {
+        "supply": "Wood",
+        "iconClass": "fas fa-tree",
+        "quantity": 40
+      }
+    ],
+    "produces": [
+      {
+        "supply": "Wood",
+        "quantity": 1
+      }
+    ]
+  }
+]

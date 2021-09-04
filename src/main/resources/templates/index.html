@@ -15,33 +15,45 @@
 </head>
 <body>
 <table id="supplies-table">
-    <thead>
-    <tr id="supplies-header-row"></tr>
-    </thead>
     <tbody>
-    <tr id="supplies-data-row"></tr>
+    <tr id="supplies-row"></tr>
     </tbody>
 </table>
 <hr/>
+<div id="town-container" class="d-flex flex-wrap">
+</div>
+<hr/>
+<div id="builder-container" class="d-flex flex-wrap">
+</div>
+<hr/>
+<div id="jobs-container" class="d-flex flex-wrap">
+</div>
 </body>
 </html>
 
 <script type="text/javascript" th:inline="javascript">
     const supplyPiles = [[${supplyPiles}]]
+    const buildings = [[${buildings}]]
+    const town = [[${town}]]
 
     $(() => {
-        const $suppliesHeaderRow = $('#supplies-header-row')
-        const $suppliesDataRow = $('#supplies-data-row')
+        const $suppliesRow = $('#supplies-row')
+        const $townContainer = $('#town-container')
+        const $builderContainer = $('#builder-container')
         const numberFormatter = new Intl.NumberFormat()
 
-        let supplyPileHeaderTemplate = '{{#supplies}}<th><i class="supply-icon {{supply.iconClass}}"></i>{{supply.label}}</th>{{/supplies}}'
-        let supplyPileDataTemplate = '{{#supplies}}<td><div class="progress"><div id="{{supply.label}}-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-info" role="progressbar" aria-valuemin="0" aria-valuemax="{{pileSize}}"></div><span></span></div></td>{{/supplies}}'
+        let supplyPileTemplate = '{{#supplies}}<td><div class="supply-header"><i class="supply-icon {{supply.iconClass}}"></i>{{supply.label}}</div><div class="progress"><div id="{{supply.label}}-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-info" role="progressbar" aria-valuemin="0" aria-valuemax="{{pileSize}}"></div><span></span></div></td>{{/supplies}}'
+        let townTemplate = '{{#buildings}}<span class="town-building" title="{{label}}"><i class="building-icon {{iconClass}}"></i></span>{{/buildings}}'
+        let builderTemplate = '{{#buildings}}<span class="builder-building-container"><i class="builder-icon {{iconClass}}"></i><span>{{label}}</span><div class="builder-description">{{description}}</div><div class="builder-cost">Cost:{{#costs}} <span class="builder-cost">{{quantity}} <i class="{{iconClass}}"></i> {{supply}}</span>{{/costs}}</div><button class="btn btn-sm btn-secondary build-building-button" data-label="{{label}}">Build</button></span>{{/buildings}}'
         let iteration = 0
 
-        Mustache.parse(supplyPileHeaderTemplate)
-        Mustache.parse(supplyPileDataTemplate)
+        Mustache.parse(supplyPileTemplate)
+        Mustache.parse(townTemplate)
+        Mustache.parse(builderTemplate)
 
-        drawBackground()
+        drawSupplies()
+        drawTown()
+        drawBuilder()
         tick()
         setInterval(tick, 1000)
 
@@ -51,13 +63,39 @@
             logIteration()
         }
 
-        function drawBackground() {
-            $suppliesHeaderRow.html(Mustache.render(supplyPileHeaderTemplate, {supplies: supplyPiles}))
-            $suppliesDataRow.html(Mustache.render(supplyPileDataTemplate, {supplies: supplyPiles}))
+        function drawSupplies() {
+            const supplies = {
+                supplies: _.filter(supplyPiles, (v) => {
+                    return v.unlocked
+                }),
+            }
+
+            $suppliesRow.html(Mustache.render(supplyPileTemplate, supplies))
+
+            _.each(supplyPiles, (pile) => {
+                incrementSupplyPileQuantity(pile, 0)
+            })
         }
 
         function draw() {
+        }
 
+        function drawTown() {
+            $townContainer.html(Mustache.render(townTemplate, town))
+        }
+
+        function drawBuilder() {
+            const builder = {
+                buildings: _.filter(buildings, (v) => {
+                    return v.unlocked
+                }),
+            }
+
+            $builderContainer.html(Mustache.render(builderTemplate, builder))
+
+            $('.build-building-button').click(function () {
+                constructBuilding($(this).data('label'))
+            })
         }
 
         function logIteration() {
@@ -69,16 +107,21 @@
         }
 
         function incrementSupplies() {
-            _.each(supplyPiles, (v, i) => {
-                incrementSupplyPileQuantity(v)
-                updateSupplyPileProgressBar(v)
+            _.each(town.buildings, (b) => {
+                if (b.produces) {
+                    _.each(b.produces, (p) => {
+                        const supplyPile = getCurrentPile(p.supply)
+                        if (supplyPile) {
+                            incrementSupplyPileQuantity(supplyPile, p.quantity)
+                        }
+                    })
+                }
             })
         }
 
-        function incrementSupplyPileQuantity(supplyPile) {
-            if (supplyPile.quantity < supplyPile.pileSize) {
-                supplyPile.quantity = _.clamp(supplyPile.quantity + 10, 0, supplyPile.pileSize)
-            }
+        function incrementSupplyPileQuantity(supplyPile, quantity) {
+            supplyPile.quantity = _.clamp(supplyPile.quantity + quantity, 0, supplyPile.pileSize)
+            updateSupplyPileProgressBar(supplyPile)
         }
 
         function updateSupplyPileProgressBar(supplyPile) {
@@ -90,11 +133,50 @@
 
             if (width === 100) {
                 $bar.removeClass('progress-bar-striped').removeClass('progress-bar-animated').removeClass('bg-info').removeClass('bg-danger').addClass('bg-success')
-            } else if (width <= 10)  {
+            } else if (width <= 10) {
                 $bar.addClass('progress-bar-striped').addClass('progress-bar-animated').removeClass('bg-info').addClass('bg-danger').removeClass('bg-success')
             } else {
                 $bar.addClass('progress-bar-striped').addClass('progress-bar-animated').addClass('bg-info').removeClass('bg-danger').removeClass('bg-success')
             }
+        }
+
+        function constructBuilding(buildingLabel) {
+            const building = _.find(buildings, (b) => {
+                return b.label === buildingLabel
+            })
+
+            const costs = []
+
+            _.each(building.costs, (c) => {
+                const quantity = getCurrentSupply(c.supply)
+
+                costs.push({
+                    label: c.supply,
+                    current: quantity,
+                    needed: c.quantity,
+                })
+            })
+
+            for (let i = 0; i < costs.length; i++) {
+                if (costs[i].current < costs[i].needed) return
+            }
+
+            _.each(costs, (c) => {
+                incrementSupplyPileQuantity(getCurrentPile(c.label), -c.needed)
+            })
+
+            town.buildings.push(building)
+            drawTown()
+        }
+
+        function getCurrentSupply(label) {
+            return getCurrentPile(label).quantity
+        }
+
+        function getCurrentPile(label) {
+            return _.find(supplyPiles, (pile) => {
+                return pile.supply.label === label
+            })
         }
     })
 </script>

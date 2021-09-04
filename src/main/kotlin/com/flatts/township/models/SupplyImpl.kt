@@ -6,6 +6,6 @@ class SupplyImpl : Supply {
     override var label: String = ""
     override val order: Int = 0
     override val iconClass: String = ""
-    override val initialQuantity: Int = 0
-    override val initialPileSize: Int = 0
+    override val quantity: Int = 0
+    override val pileSize: Int = 0
 }
