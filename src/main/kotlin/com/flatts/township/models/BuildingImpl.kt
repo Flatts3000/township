@@ -7,6 +7,7 @@ class BuildingImpl : Building {
     override var description: String = ""
     override var costs: Set<SupplyMarkerImpl> = setOf()
     override var produces: Set<SupplyMarkerImpl> = setOf()
+    override var consumes: Set<SupplyMarkerImpl> = setOf()
     override var unlocked: Boolean = false
     override var iconClass: String = ""
 }

@@ -14,29 +14,37 @@ class GameService(private val gameRepository: GameRepository, private val supply
         val log: Logger = LoggerFactory.getLogger(GameService::class.java)
     }
 
-    fun findGame(id: String): GameImpl? {
-        var game = gameRepository.findByGuid(id)
+    fun findGame(guid: String): GameImpl {
+        val game = gameRepository.findByGuid(guid)
 
-        if (game != null) return game
+        if (game != null) {
+            return game
+        }
+        
+        createGame()
 
-        game = GameImpl()
+        return findGame(defaultId)
+    }
+
+    fun createGame() {
+        val game = GameImpl()
         game.guid = defaultId
         game.town = buildingService.buildTown()
         game.supplyPiles = supplyService.buildSupplyPiles()
         log.info("Creating new game: {}", game)
-        return game
+        saveGame(game)
     }
 
     fun saveGame(game: GameImpl) {
         log.info("Saving game: {}", game)
-        
+
         val existingGame = gameRepository.findByGuid(game.guid)
-        
+
         if (existingGame == null) {
             gameRepository.save(game)
             return
         }
-        
+
         existingGame.town = game.town
         existingGame.supplyPiles = game.supplyPiles
 

@@ -9,6 +9,6 @@ class GameImpl : Game, Serializable {
     override var town: TownImpl = TownImpl()
     override var supplyPiles: List<SupplyPileImpl> = listOf()
     override fun toString(): String {
-        return "GameImpl(guid='$guid', town=$town, supplyPiles=$supplyPiles)"
+        return "GameImpl(guid='$guid')"
     }
 }

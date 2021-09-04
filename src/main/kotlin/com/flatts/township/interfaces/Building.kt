@@ -9,4 +9,5 @@ interface Building {
     val produces: Set<SupplyMarkerImpl>
     val unlocked: Boolean
     val description: String
+    var consumes: Set<SupplyMarkerImpl>
 }

@@ -13,4 +13,8 @@ class SupplyPileImpl(override val supply: SupplyImpl) : SupplyPile {
         pileSize = supply.pileSize
         unlocked = supply.label == "Food" || supply.label == "Wood"
     }
+
+    override fun updateQuantity(i: Int) {
+        quantity = (quantity + i).coerceIn(0, pileSize)
+    }
 }
