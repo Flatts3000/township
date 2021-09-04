@@ -15,7 +15,7 @@ import java.nio.file.Files
 
 @Service
 class BuildingService {
-    private val buildingsSet: Set<Building>
+    private val buildingsSet: Set<BuildingImpl>
 
     companion object {
         val log: Logger = LoggerFactory.getLogger(BuildingService::class.java)
@@ -40,7 +40,7 @@ class BuildingService {
         return buildingsSet
     }
 
-    fun buildTown(): Town {
+    fun buildTown(): TownImpl {
         val town = TownImpl()
 
         for (building in buildingsSet) {

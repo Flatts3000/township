@@ -18,7 +18,7 @@ import java.util.stream.Collectors
 
 @Service
 class SupplyService {
-    private val supplyList: List<Supply>
+    private val supplyList: List<SupplyImpl>
 
     companion object {
         val log: Logger = LoggerFactory.getLogger(SupplyService::class.java)
@@ -40,8 +40,8 @@ class SupplyService {
         log.info("Loaded {} supplies", supplyList.size)
     }
 
-    fun buildSupplyPiles(): List<SupplyPile> {
-        val supplyPiles: MutableList<SupplyPile> = arrayListOf()
+    fun buildSupplyPiles(): List<SupplyPileImpl> {
+        val supplyPiles: MutableList<SupplyPileImpl> = arrayListOf()
 
         for (supply in supplyList) {
             supplyPiles.add(SupplyPileImpl(supply))
