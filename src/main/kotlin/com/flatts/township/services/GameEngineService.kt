@@ -17,10 +17,16 @@ class GameEngineService(private val gameService: GameService, private val messag
     }
 
     fun addGame(game: GameImpl) {
+        if (runningGames.any { it.guid == game.guid }) return
         runningGames.add(game)
     }
 
-    @Scheduled(fixedRate = 1000)
+    fun removeGame(game: GameImpl) {
+        val runningGame = runningGames.find { it.guid == game.guid } ?: return
+        runningGames.remove(runningGame)
+    }
+
+    @Scheduled(fixedDelay = 1000)
     fun tickAll() {
         runningGames.forEach {
             tick(it)
@@ -36,7 +42,9 @@ class GameEngineService(private val gameService: GameService, private val messag
         // Validate that all costs can be paid.
         building.costs.forEach {
             val pile = findSupplyPile(game, it.supply) ?: return false
+
             dirtyPiles.add(pile)
+
             if (pile.quantity < it.quantity) return false
         }
 

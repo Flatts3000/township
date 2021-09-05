@@ -52,4 +52,9 @@ class GameService(private val gameRepository: GameRepository, private val supply
 
         gameRepository.save(existingGame)
     }
+
+    fun resetGame(game: GameImpl) {
+        log.info("Resetting game: {}", game)
+        gameRepository.deleteByGuid(game.guid)
+    }
 }

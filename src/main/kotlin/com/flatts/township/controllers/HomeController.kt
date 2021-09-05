@@ -35,4 +35,12 @@ class HomeController(private val gameService: GameService, private val buildingS
         }
         return ResponseEntity(false, HttpStatus.INTERNAL_SERVER_ERROR)
     }
+
+    @PostMapping("/reset/{guid}")
+    fun reset(@PathVariable guid: String): ResponseEntity<Boolean> {
+        val game = gameService.findGame(gameService.defaultId)
+        gameService.resetGame(game)
+        gameEngineService.removeGame(game)
+        return ResponseEntity(true, HttpStatus.OK)
+    }
 }

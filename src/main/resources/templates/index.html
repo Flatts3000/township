@@ -30,6 +30,10 @@
 <hr/>
 <div id="jobs-container" class="d-flex flex-wrap">
 </div>
+<hr/>
+<div class="pl-2">
+    <button id="reset-button" class="btn btn-danger">Reset</button>
+</div>
 </body>
 </html>
 
@@ -94,6 +98,12 @@
         drawSupplies()
         drawTown()
         drawBuilder()
+
+        $('#reset-button').click(() => {
+            $.post(`/reset/${[[${game.guid}]]}`, () => {
+                location.reload()
+            })
+        })
 
         function drawSupplies() {
             const supplies = {

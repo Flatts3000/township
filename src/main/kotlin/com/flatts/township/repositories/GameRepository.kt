@@ -9,4 +9,5 @@ import org.springframework.stereotype.Repository
 @Repository
 interface GameRepository : MongoRepository<GameImpl, String> {
     fun findByGuid(id: String): GameImpl?
+    fun deleteByGuid(guid: String)
 }
