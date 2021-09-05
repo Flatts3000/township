@@ -50,4 +50,8 @@ class BuildingService {
 
         return town
     }
+
+    fun findBuilding(label: String): BuildingImpl? {
+        return buildingsSet.find { it.label == label }
+    }
 }

@@ -8,7 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
 @Service
-class GameEngineService(private val gameService: GameService, private val messageService: MessageService) {
+class GameEngineService(private val gameService: GameService, private val messageService: MessageService, private val buildingService: BuildingService) {
     private val runningGames = mutableSetOf<GameImpl>()
 
     companion object {
@@ -27,12 +27,39 @@ class GameEngineService(private val gameService: GameService, private val messag
         }
     }
 
-    private fun tick(game: GameImpl) {
-        log.info("Ticking game: {}", game)
-        updateSupplyPiles(game)
+    fun build(guid: String, label: String): Boolean {
+        val game = findGame(guid) ?: return false
+        val building = buildingService.findBuilding(label) ?: return false
+        val dirtyPiles = mutableSetOf<SupplyPileImpl>()
+        
+        // Validate that all costs can be paid.
+        building.costs.forEach { 
+            val pile = findSupplyPile(game, it.supply) ?: return false
+            dirtyPiles.add(pile)
+            if (pile.quantity < it.quantity) return false
+        }
+        
+        // Pay all costs.
+        building.costs.forEach {
+            val pile = findSupplyPile(game, it.supply) ?: return false
+            pile.updateQuantity(-it.quantity)
+        }
+        
+        // Create a building.
+        game.town.buildings.add(building)
+        
+        messageService.sendSupplyUpdateMessage(dirtyPiles)
+        messageService.sendNewBuildingMessage(building)
+        
+        return true
     }
 
-    private fun updateSupplyPiles(game: GameImpl) {
+    private fun tick(game: GameImpl) {
+        log.info("Ticking game: {}", game)
+        tickSupplyPiles(game)
+    }
+
+    private fun tickSupplyPiles(game: GameImpl) {
         val dirtySupplyPiles = mutableSetOf<SupplyPileImpl>()
 
         for (building in game.town.buildings) {
@@ -56,6 +83,10 @@ class GameEngineService(private val gameService: GameService, private val messag
         }
 
         if (dirtySupplyPiles.isNotEmpty()) messageService.sendSupplyUpdateMessage(dirtySupplyPiles)
+    }
+
+    private fun findGame(guid: String): GameImpl? {
+        return runningGames.find { it.guid == guid }
     }
 
     private fun findSupplyPile(game: GameImpl, supply: String): SupplyPileImpl? {

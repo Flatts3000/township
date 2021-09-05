@@ -14,10 +14,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.*
 import org.thymeleaf.util.StringUtils
 
 @Controller
@@ -29,5 +26,13 @@ class HomeController(private val gameService: GameService, private val buildingS
         model.addAttribute("game", game)
         model.addAttribute("buildings", buildingService.getBuildings())
         return "index"
+    }
+
+    @PostMapping("/build/{guid}")
+    fun build(@PathVariable guid: String, @RequestParam label: String): ResponseEntity<Boolean> {
+        if (gameEngineService.build(guid, label)) {
+            return ResponseEntity(true, HttpStatus.OK)
+        }
+        return ResponseEntity(false, HttpStatus.INTERNAL_SERVER_ERROR)
     }
 }

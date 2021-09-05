@@ -63,9 +63,17 @@
             stompClient.connect({}, function (frame) {
                 console.log('Connected: ' + frame)
 
-                stompClient.subscribe('/topic/game', function (message) {
-                    const dirtySupplyPiles = JSON.parse(message.body).supplyPiles
-                    updateSupplyPiles(dirtySupplyPiles)
+                stompClient.subscribe('/topic/game', function (body) {
+                    const message = JSON.parse(body.body)
+
+                    switch (message.type) {
+                        case 'SupplyPileUpdate':
+                            updateSupplyPiles(message.supplyPiles)
+                            break
+                        case 'NewBuildingUpdate':
+                            constructBuilding(message.building)
+                            break
+                    }
                 })
             })
         }
@@ -106,7 +114,7 @@
             $builderContainer.html(Mustache.render(builderTemplate, builder))
 
             $('.build-building-button').click(function () {
-                constructBuilding($(this).data('label'))
+                $.post(`/build/${[[${game.guid}]]}?label=${$(this).data('label')}`)
             })
         }
 
@@ -132,43 +140,9 @@
             }
         }
 
-        function constructBuilding(buildingLabel) {
-            const building = _.find(buildings, (b) => {
-                return b.label === buildingLabel
-            })
-
-            const costs = []
-
-            _.each(building.costs, (c) => {
-                const quantity = getCurrentSupply(c.supply)
-
-                costs.push({
-                    label: c.supply,
-                    current: quantity,
-                    needed: c.quantity,
-                })
-            })
-
-            for (let i = 0; i < costs.length; i++) {
-                if (costs[i].current < costs[i].needed) return
-            }
-
-            _.each(costs, (c) => {
-                incrementSupplyPileQuantity(getCurrentPile(c.label), -c.needed)
-            })
-
+        function constructBuilding(building) {
             town.buildings.push(building)
             drawTown()
-        }
-
-        function getCurrentSupply(label) {
-            return getCurrentPile(label).quantity
-        }
-
-        function getCurrentPile(label) {
-            return _.find(supplyPiles, (pile) => {
-                return pile.supply.label === label
-            })
         }
     })
 </script>
