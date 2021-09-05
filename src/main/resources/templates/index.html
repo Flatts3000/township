@@ -88,6 +88,8 @@
                             drawSupplies()
                             break
                     }
+
+                    updateIcons()
                 })
             })
         }
@@ -168,7 +170,7 @@
         }
 
         function updateIcons() {
-            $('.facus').each(function () {
+            $('i.facus').each(function () {
                 const $this = $(this)
                 const $img = $('<img>')
 

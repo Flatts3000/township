@@ -57,7 +57,7 @@ class GameEngineService(private val gameService: GameService, private val messag
 
         // Unlock stuff.
         unlockObjects(game, building)
-        
+
         messageService.sendSupplyUpdateMessage(dirtyPiles)
         messageService.sendNewBuildingMessage(building)
 
@@ -72,27 +72,33 @@ class GameEngineService(private val gameService: GameService, private val messag
     private fun tickSupplyPiles(game: GameImpl) {
         game.towns.forEach {
             val dirtySupplyPiles = mutableSetOf<SupplyPileImpl>()
+            val pileMap: MutableMap<SupplyPileImpl, Double> = mutableMapOf()
 
             for (kvp in it.buildings) {
                 val building = buildingService.findBuilding(kvp.key) ?: continue
-
-                for (marker in building.produces) {
-                    val pile = findSupplyPile(game, marker.supply)
-
-                    if (pile != null) {
-                        pile.updateQuantity(marker.quantity * kvp.value)
-                        dirtySupplyPiles.add(pile)
-                    }
-                }
 
                 for (marker in building.consumes) {
                     val pile = findSupplyPile(game, marker.supply)
 
                     if (pile != null) {
-                        pile.updateQuantity(-marker.quantity * kvp.value)
-                        dirtySupplyPiles.add(pile)
+                        val a = -marker.quantity * kvp.value
+                        pileMap[pile] = a + (pileMap[pile] ?: 0.0)
                     }
                 }
+
+                for (marker in building.produces) {
+                    val pile = findSupplyPile(game, marker.supply)
+
+                    if (pile != null) {
+                        val a = marker.quantity * kvp.value
+                        pileMap[pile] = a + (pileMap[pile] ?: 0.0)
+                    }
+                }
+            }
+
+            pileMap.forEach { x ->
+                x.key.updateQuantity(x.value)
+                dirtySupplyPiles.add(x.key)
             }
 
             if (dirtySupplyPiles.isNotEmpty()) messageService.sendSupplyUpdateMessage(dirtySupplyPiles)
