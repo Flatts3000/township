@@ -40,13 +40,18 @@ class SupplyService {
         log.info("Loaded {} supplies", supplyList.size)
     }
 
-    fun buildSupplyPiles(): List<SupplyPileImpl> {
+    fun buildSupplyPiles(): MutableList<SupplyPileImpl> {
         val supplyPiles: MutableList<SupplyPileImpl> = arrayListOf()
 
-        for (supply in supplyList) {
-            supplyPiles.add(SupplyPileImpl(supply))
+        supplyList.forEach {
+            if (it.unlocked) supplyPiles.add(SupplyPileImpl(it))
         }
 
         return supplyPiles
+    }
+
+    fun findSupply(label: String): SupplyPileImpl? {
+        val supply = supplyList.find { it.label == label } ?: return null
+        return SupplyPileImpl(supply)
     }
 }

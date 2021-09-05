@@ -1,9 +1,7 @@
 package com.flatts.township.services
 
 import com.flatts.township.interfaces.Building
-import com.flatts.township.interfaces.Town
 import com.flatts.township.models.BuildingImpl
-import com.flatts.township.models.TownImpl
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import org.slf4j.Logger
@@ -40,18 +38,28 @@ class BuildingService {
         return buildingsSet
     }
 
-    fun buildTown(): TownImpl {
-        val town = TownImpl()
+    fun buildTown(): MutableList<BuildingImpl> {
+        val buildings = mutableListOf<BuildingImpl>()
 
         for (building in buildingsSet) {
-            if (building.label == "Farm") town.buildings.add(building)
-            if (building.label == "Tent") town.buildings.add(building)
+            if (building.label == "Farm") buildings.add(building)
+            if (building.label == "Tent") buildings.add(building)
         }
 
-        return town
+        return buildings
     }
 
     fun findBuilding(label: String): BuildingImpl? {
         return buildingsSet.find { it.label == label }
+    }
+
+    fun buildBuilder(): MutableSet<BuildingImpl> {
+        val buildings = mutableSetOf<BuildingImpl>()
+
+        for (building in buildingsSet) {
+            if (building.unlocked) buildings.add(building)
+        }
+
+        return buildings
     }
 }

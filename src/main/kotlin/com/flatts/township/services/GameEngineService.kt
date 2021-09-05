@@ -1,5 +1,6 @@
 package com.flatts.township.services
 
+import com.flatts.township.models.BuildingImpl
 import com.flatts.township.models.GameImpl
 import com.flatts.township.models.SupplyPileImpl
 import org.slf4j.Logger
@@ -8,7 +9,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
 @Service
-class GameEngineService(private val gameService: GameService, private val messageService: MessageService, private val buildingService: BuildingService) {
+class GameEngineService(private val gameService: GameService, private val messageService: MessageService, private val buildingService: BuildingService, private val supplyService: SupplyService) {
     private val runningGames = mutableSetOf<GameImpl>()
 
     companion object {
@@ -31,26 +32,29 @@ class GameEngineService(private val gameService: GameService, private val messag
         val game = findGame(guid) ?: return false
         val building = buildingService.findBuilding(label) ?: return false
         val dirtyPiles = mutableSetOf<SupplyPileImpl>()
-        
+
         // Validate that all costs can be paid.
-        building.costs.forEach { 
+        building.costs.forEach {
             val pile = findSupplyPile(game, it.supply) ?: return false
             dirtyPiles.add(pile)
             if (pile.quantity < it.quantity) return false
         }
-        
+
         // Pay all costs.
         building.costs.forEach {
             val pile = findSupplyPile(game, it.supply) ?: return false
             pile.updateQuantity(-it.quantity)
         }
-        
+
         // Create a building.
-        game.town.buildings.add(building)
-        
+        game.buildings.add(building)
+
+        // Unlock stuff.
+        unlockObjects(game, building)
+
         messageService.sendSupplyUpdateMessage(dirtyPiles)
         messageService.sendNewBuildingMessage(building)
-        
+
         return true
     }
 
@@ -62,7 +66,7 @@ class GameEngineService(private val gameService: GameService, private val messag
     private fun tickSupplyPiles(game: GameImpl) {
         val dirtySupplyPiles = mutableSetOf<SupplyPileImpl>()
 
-        for (building in game.town.buildings) {
+        for (building in game.buildings) {
             for (marker in building.produces) {
                 val pile = findSupplyPile(game, marker.supply)
 
@@ -83,6 +87,27 @@ class GameEngineService(private val gameService: GameService, private val messag
         }
 
         if (dirtySupplyPiles.isNotEmpty()) messageService.sendSupplyUpdateMessage(dirtySupplyPiles)
+    }
+
+    private fun unlockObjects(game: GameImpl, building: BuildingImpl) {
+        if (building.unlocks.isEmpty()) return
+
+        building.unlocks.forEach {
+            when (it.type) {
+                "building" -> {
+                    val builder = buildingService.findBuilding(it.label) ?: return@forEach
+                    if (game.builder.find { b -> b.label == builder.label } != null) return@forEach
+                    game.builder.add(builder)
+                    messageService.sendNewBuilderMessage(builder)
+                }
+                "supply" -> {
+                    val supply = supplyService.findSupply(it.label) ?: return@forEach
+                    if (game.supplyPiles.find { p -> p.supply.label == supply.supply.label } != null) return@forEach
+                    game.supplyPiles.add(supply)
+                    messageService.sendNewSupplyMessage(supply)
+                }
+            }
+        }
     }
 
     private fun findGame(guid: String): GameImpl? {

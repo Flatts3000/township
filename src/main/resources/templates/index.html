@@ -35,8 +35,8 @@
 
 <script type="text/javascript" th:inline="javascript">
     const supplyPiles = [[${game.supplyPiles}]]
-    const buildings = [[${buildings}]]
-    const town = [[${game.town}]]
+    const buildings = [[${game.builder}]]
+    const town = [[${game.buildings}]]
 
     $(() => {
         const $suppliesRow = $('#supplies-row')
@@ -71,7 +71,16 @@
                             updateSupplyPiles(message.supplyPiles)
                             break
                         case 'NewBuildingUpdate':
-                            constructBuilding(message.building)
+                            town.push(message.building)
+                            drawTown()
+                            break
+                        case 'NewBuilderUpdate':
+                            buildings.push(message.building)
+                            drawBuilder()
+                            break
+                        case 'NewSupplyUpdate':
+                            supplyPiles.push(message.supplyPile)
+                            drawSupplies()
                             break
                     }
                 })
@@ -88,9 +97,7 @@
 
         function drawSupplies() {
             const supplies = {
-                supplies: _.filter(supplyPiles, (v) => {
-                    return v.unlocked
-                }),
+                supplies: supplyPiles,
             }
 
             $suppliesRow.html(Mustache.render(supplyPileTemplate, supplies))
@@ -101,14 +108,12 @@
         }
 
         function drawTown() {
-            $townContainer.html(Mustache.render(townTemplate, town))
+            $townContainer.html(Mustache.render(townTemplate, {buildings: town}))
         }
 
         function drawBuilder() {
             const builder = {
-                buildings: _.filter(buildings, (v) => {
-                    return v.unlocked
-                }),
+                buildings: buildings,
             }
 
             $builderContainer.html(Mustache.render(builderTemplate, builder))
@@ -138,11 +143,6 @@
             } else {
                 $bar.addClass('progress-bar-striped').addClass('progress-bar-animated').addClass('bg-info').removeClass('bg-danger').removeClass('bg-success')
             }
-        }
-
-        function constructBuilding(building) {
-            town.buildings.push(building)
-            drawTown()
         }
     })
 </script>

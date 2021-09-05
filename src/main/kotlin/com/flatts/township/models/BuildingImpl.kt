@@ -8,6 +8,11 @@ class BuildingImpl : Building {
     override var costs: Set<SupplyMarkerImpl> = setOf()
     override var produces: Set<SupplyMarkerImpl> = setOf()
     override var consumes: Set<SupplyMarkerImpl> = setOf()
+    override var unlocks: Set<UnlockMarkerImpl> = setOf()
     override var unlocked: Boolean = false
     override var iconClass: String = ""
+
+    override fun toString(): String {
+        return label
+    }
 }

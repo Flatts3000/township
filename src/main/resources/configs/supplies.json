@@ -4,14 +4,16 @@
     "label": "Food",
     "iconClass": "fas fa-bread-slice",
     "quantity": 50,
-    "pileSize": 200
+    "pileSize": 200,
+    "unlocked": true
   },
   {
     "order": 1,
     "label": "Wood",
     "iconClass": "fas fa-tree",
     "quantity": 50,
-    "pileSize": 200
+    "pileSize": 200,
+    "unlocked": true
   },
   {
     "order": 2,

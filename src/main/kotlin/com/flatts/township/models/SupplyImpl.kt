@@ -8,4 +8,9 @@ class SupplyImpl : Supply {
     override var iconClass: String = ""
     override var quantity: Int = 0
     override var pileSize: Int = 0
+    override var unlocked: Boolean = false
+
+    override fun toString(): String {
+        return label
+    }
 }
