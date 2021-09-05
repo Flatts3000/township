@@ -18,13 +18,15 @@ import org.springframework.web.bind.annotation.*
 import org.thymeleaf.util.StringUtils
 
 @Controller
-class HomeController(private val gameService: GameService, private val buildingService: BuildingService, private val gameEngineService: GameEngineService) {
+class HomeController(private val gameService: GameService, private val supplyService: SupplyService, private val buildingService: BuildingService, private val gameEngineService: GameEngineService) {
     @GetMapping("")
     fun index(model: Model): String {
         val game = gameService.findGame(gameService.defaultId)
         gameEngineService.addGame(game)
         model.addAttribute("game", game)
-        model.addAttribute("buildings", buildingService.getBuildings())
+        model.addAttribute("town", game.towns.first())
+        model.addAttribute("supplyMap", supplyService.getSupplies())
+        model.addAttribute("buildingMap", buildingService.getBuildings())
         return "index"
     }
 

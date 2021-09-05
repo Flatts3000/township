@@ -5,5 +5,5 @@ import com.flatts.township.interfaces.SupplyMarker
 class SupplyMarkerImpl : SupplyMarker {
     override var supply: String = ""
     override var iconClass: String = ""
-    override var quantity: Int = 0
+    override var quantity: Double = 0.0
 }

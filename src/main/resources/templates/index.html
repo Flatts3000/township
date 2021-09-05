@@ -38,9 +38,11 @@
 </html>
 
 <script type="text/javascript" th:inline="javascript">
+    const supplyMap = [[${supplyMap}]]
+    const buildingMap = [[${buildingMap}]]
     const supplyPiles = [[${game.supplyPiles}]]
     const buildings = [[${game.builder}]]
-    const town = [[${game.buildings}]]
+    const town = [[${town.buildings}]]
 
     $(() => {
         const $suppliesRow = $('#supplies-row')
@@ -75,11 +77,11 @@
                             updateSupplyPiles(message.supplyPiles)
                             break
                         case 'NewBuildingUpdate':
-                            town.push(message.building)
+                            town[message.building.label] = (town[message.building.label] ? town[message.building.label] : 0) + 1
                             drawTown()
                             break
                         case 'NewBuilderUpdate':
-                            buildings.push(message.building)
+                            buildings.push(message.building.label)
                             drawBuilder()
                             break
                         case 'NewSupplyUpdate':
@@ -107,7 +109,7 @@
 
         function drawSupplies() {
             const supplies = {
-                supplies: supplyPiles,
+                supplies: _.sortBy(supplyPiles, (p) => {return p.supply.order}),
             }
 
             $suppliesRow.html(Mustache.render(supplyPileTemplate, supplies))
@@ -118,15 +120,25 @@
         }
 
         function drawTown() {
-            $townContainer.html(Mustache.render(townTemplate, {buildings: town}))
+            const buildings = []
+
+            _.each(town, (v, k) => {
+                for (let i = 0; i < v; i++) {
+                    buildings.push(buildingMap[k])
+                }
+            })
+
+            $townContainer.html(Mustache.render(townTemplate, {buildings: buildings}))
         }
 
         function drawBuilder() {
-            const builder = {
-                buildings: buildings,
-            }
+            const builder = []
 
-            $builderContainer.html(Mustache.render(builderTemplate, builder))
+            _.each(buildings, (k) => {
+                builder.push(buildingMap[k])
+            })
+
+            $builderContainer.html(Mustache.render(builderTemplate, {buildings: builder}))
 
             $('.build-building-button').click(function () {
                 $.post(`/build/${[[${game.guid}]]}?label=${$(this).data('label')}`)
@@ -140,7 +152,7 @@
         }
 
         function updateSupplyPileProgressBar(supplyPile) {
-            const $bar = $(`#${supplyPile.supply.label}-progress-bar`)
+            const $bar = $(`#${supplyPile.label}-progress-bar`)
             const width = _.round((supplyPile.quantity / supplyPile.pileSize) * 100)
 
             $bar.css('width', `${width}%`).attr('aria-valuenow', width)

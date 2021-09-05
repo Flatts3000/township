@@ -29,8 +29,8 @@ class GameService(private val gameRepository: GameRepository, private val supply
     fun createGame() {
         val game = GameImpl()
         game.guid = defaultId
+        game.towns = buildingService.buildTowns()
         game.builder = buildingService.buildBuilder()
-        game.buildings = buildingService.buildTown()
         game.supplyPiles = supplyService.buildSupplyPiles()
         log.info("Creating new game: {}", game)
         saveGame(game)
@@ -46,8 +46,8 @@ class GameService(private val gameRepository: GameRepository, private val supply
             return
         }
 
+        existingGame.towns = game.towns
         existingGame.builder = game.builder
-        existingGame.buildings = game.buildings
         existingGame.supplyPiles = game.supplyPiles
 
         gameRepository.save(existingGame)

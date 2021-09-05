@@ -1,12 +1,14 @@
 package com.flatts.township.interfaces
 
-import com.flatts.township.models.BuildingImpl
 import com.flatts.township.models.SupplyPileImpl
+import com.flatts.township.models.TownImpl
+import java.time.Instant
 
 interface Game {
-    var id: String
+    val created: Instant
+    var builder: MutableList<String>
     var guid: String
+    var id: String
     var supplyPiles: MutableList<SupplyPileImpl>
-    var buildings: MutableList<BuildingImpl>
-    var builder: MutableSet<BuildingImpl>
+    var towns: MutableList<TownImpl>
 }

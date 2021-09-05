@@ -10,25 +10,23 @@ import org.springframework.stereotype.Service
 
 @Service
 class GameEngineService(private val gameService: GameService, private val messageService: MessageService, private val buildingService: BuildingService, private val supplyService: SupplyService) {
-    private val runningGames = mutableSetOf<GameImpl>()
+    private val runningGames = mutableMapOf<String, GameImpl>()
 
     companion object {
         val log: Logger = LoggerFactory.getLogger(GameEngineService::class.java)
     }
 
     fun addGame(game: GameImpl) {
-        if (runningGames.any { it.guid == game.guid }) return
-        runningGames.add(game)
+        runningGames.putIfAbsent(game.guid, game)
     }
 
     fun removeGame(game: GameImpl) {
-        val runningGame = runningGames.find { it.guid == game.guid } ?: return
-        runningGames.remove(runningGame)
+        runningGames.remove(game.guid)
     }
 
     @Scheduled(fixedDelay = 1000)
     fun tickAll() {
-        runningGames.forEach {
+        runningGames.values.forEach {
             tick(it)
             gameService.saveGame(it)
         }
@@ -55,11 +53,11 @@ class GameEngineService(private val gameService: GameService, private val messag
         }
 
         // Create a building.
-        game.buildings.add(building)
+        game.towns.first().buildings[building.label] = Math.addExact(1, game.towns.first().buildings[building.label] ?: 0)
 
         // Unlock stuff.
         unlockObjects(game, building)
-
+        
         messageService.sendSupplyUpdateMessage(dirtyPiles)
         messageService.sendNewBuildingMessage(building)
 
@@ -72,29 +70,33 @@ class GameEngineService(private val gameService: GameService, private val messag
     }
 
     private fun tickSupplyPiles(game: GameImpl) {
-        val dirtySupplyPiles = mutableSetOf<SupplyPileImpl>()
+        game.towns.forEach {
+            val dirtySupplyPiles = mutableSetOf<SupplyPileImpl>()
 
-        for (building in game.buildings) {
-            for (marker in building.produces) {
-                val pile = findSupplyPile(game, marker.supply)
+            for (kvp in it.buildings) {
+                val building = buildingService.findBuilding(kvp.key) ?: continue
 
-                if (pile != null) {
-                    pile.updateQuantity(marker.quantity)
-                    dirtySupplyPiles.add(pile)
+                for (marker in building.produces) {
+                    val pile = findSupplyPile(game, marker.supply)
+
+                    if (pile != null) {
+                        pile.updateQuantity(marker.quantity * kvp.value)
+                        dirtySupplyPiles.add(pile)
+                    }
+                }
+
+                for (marker in building.consumes) {
+                    val pile = findSupplyPile(game, marker.supply)
+
+                    if (pile != null) {
+                        pile.updateQuantity(-marker.quantity * kvp.value)
+                        dirtySupplyPiles.add(pile)
+                    }
                 }
             }
 
-            for (marker in building.consumes) {
-                val pile = findSupplyPile(game, marker.supply)
-
-                if (pile != null) {
-                    pile.updateQuantity(-marker.quantity)
-                    dirtySupplyPiles.add(pile)
-                }
-            }
+            if (dirtySupplyPiles.isNotEmpty()) messageService.sendSupplyUpdateMessage(dirtySupplyPiles)
         }
-
-        if (dirtySupplyPiles.isNotEmpty()) messageService.sendSupplyUpdateMessage(dirtySupplyPiles)
     }
 
     private fun unlockObjects(game: GameImpl, building: BuildingImpl) {
@@ -104,13 +106,13 @@ class GameEngineService(private val gameService: GameService, private val messag
             when (it.type) {
                 "building" -> {
                     val builder = buildingService.findBuilding(it.label) ?: return@forEach
-                    if (game.builder.find { b -> b.label == builder.label } != null) return@forEach
-                    game.builder.add(builder)
+                    if (game.builder.find { b -> b == builder.label } != null) return@forEach
+                    game.builder.add(builder.label)
                     messageService.sendNewBuilderMessage(builder)
                 }
                 "supply" -> {
                     val supply = supplyService.findSupply(it.label) ?: return@forEach
-                    if (game.supplyPiles.find { p -> p.supply.label == supply.supply.label } != null) return@forEach
+                    if (game.supplyPiles.find { p -> p.label == supply.label } != null) return@forEach
                     game.supplyPiles.add(supply)
                     messageService.sendNewSupplyMessage(supply)
                 }
@@ -119,10 +121,10 @@ class GameEngineService(private val gameService: GameService, private val messag
     }
 
     private fun findGame(guid: String): GameImpl? {
-        return runningGames.find { it.guid == guid }
+        return runningGames[guid]
     }
 
     private fun findSupplyPile(game: GameImpl, supply: String): SupplyPileImpl? {
-        return game.supplyPiles.firstOrNull { it.supply.label == supply }
+        return game.supplyPiles.firstOrNull { it.label == supply }
     }
 }

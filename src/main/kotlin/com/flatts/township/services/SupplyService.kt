@@ -1,8 +1,5 @@
 package com.flatts.township.services
 
-import com.flatts.township.interfaces.Supply
-import com.flatts.township.interfaces.SupplyPile
-import com.flatts.township.services.SupplyService
 import com.google.gson.Gson
 import com.flatts.township.models.SupplyImpl
 import com.flatts.township.models.SupplyPileImpl
@@ -14,11 +11,12 @@ import org.springframework.util.ResourceUtils
 import java.lang.Exception
 import java.nio.file.Files
 import java.util.Comparator
+import java.util.function.Function
 import java.util.stream.Collectors
 
 @Service
 class SupplyService {
-    private val supplyList: List<SupplyImpl>
+    private val supplyMap: MutableMap<String, SupplyImpl>
 
     companion object {
         val log: Logger = LoggerFactory.getLogger(SupplyService::class.java)
@@ -36,14 +34,15 @@ class SupplyService {
         }
 
         val unsorted: List<SupplyImpl> = gson.fromJson(json, object : TypeToken<List<SupplyImpl?>?>() {}.type)
-        supplyList = unsorted.stream().sorted(Comparator.comparingInt(SupplyImpl::order)).collect(Collectors.toList())
+        val supplyList = unsorted.stream().sorted(Comparator.comparingInt(SupplyImpl::order)).collect(Collectors.toList())
+        supplyMap = supplyList.stream().collect(Collectors.toMap(SupplyImpl::label, Function.identity()))
         log.info("Loaded {} supplies", supplyList.size)
     }
 
     fun buildSupplyPiles(): MutableList<SupplyPileImpl> {
         val supplyPiles: MutableList<SupplyPileImpl> = arrayListOf()
 
-        supplyList.forEach {
+        supplyMap.values.forEach {
             if (it.unlocked) supplyPiles.add(SupplyPileImpl(it))
         }
 
@@ -51,7 +50,11 @@ class SupplyService {
     }
 
     fun findSupply(label: String): SupplyPileImpl? {
-        val supply = supplyList.find { it.label == label } ?: return null
+        val supply = supplyMap[label] ?: return null
         return SupplyPileImpl(supply)
+    }
+
+    fun getSupplies(): Map<String, SupplyImpl> {
+        return supplyMap
     }
 }
