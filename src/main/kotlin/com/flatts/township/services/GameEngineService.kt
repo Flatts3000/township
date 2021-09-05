@@ -8,7 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
 @Service
-class GameEngineService(private val gameService: GameService) {
+class GameEngineService(private val gameService: GameService, private val messageService: MessageService) {
     private val runningGames = mutableSetOf<GameImpl>()
 
     companion object {
@@ -33,17 +33,29 @@ class GameEngineService(private val gameService: GameService) {
     }
 
     private fun updateSupplyPiles(game: GameImpl) {
+        val dirtySupplyPiles = mutableSetOf<SupplyPileImpl>()
+
         for (building in game.town.buildings) {
             for (marker in building.produces) {
                 val pile = findSupplyPile(game, marker.supply)
-                pile?.updateQuantity(marker.quantity)
+
+                if (pile != null) {
+                    pile.updateQuantity(marker.quantity)
+                    dirtySupplyPiles.add(pile)
+                }
             }
 
             for (marker in building.consumes) {
                 val pile = findSupplyPile(game, marker.supply)
-                pile?.updateQuantity(-marker.quantity)
+
+                if (pile != null) {
+                    pile.updateQuantity(-marker.quantity)
+                    dirtySupplyPiles.add(pile)
+                }
             }
         }
+
+        if (dirtySupplyPiles.isNotEmpty()) messageService.sendSupplyUpdateMessage(dirtySupplyPiles)
     }
 
     private fun findSupplyPile(game: GameImpl, supply: String): SupplyPileImpl? {

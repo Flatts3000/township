@@ -11,6 +11,8 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" integrity="sha256-qXBd/EfAdjOA2FGrGAG+b3YBn2tn5A6bhz+LSgYD96k=" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/mustache@latest"></script>
+    <script src="/webjars/sockjs-client/sockjs.min.js"></script>
+    <script src="/webjars/stomp-websocket/stomp.min.js"></script>
     <script th:src="@{/js/index.js}"></script>
 </head>
 <body>
@@ -42,28 +44,39 @@
         const $builderContainer = $('#builder-container')
         const numberFormatter = new Intl.NumberFormat()
 
+        let stompClient = null
         let supplyPileTemplate = '{{#supplies}}<td><div class="supply-header"><i class="supply-icon {{supply.iconClass}}"></i>{{supply.label}}</div><div class="progress"><div id="{{supply.label}}-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-info" role="progressbar" aria-valuemin="0" aria-valuemax="{{pileSize}}"></div><span></span></div></td>{{/supplies}}'
         let townTemplate = '{{#buildings}}<span class="town-building" title="{{label}}"><i class="building-icon {{iconClass}}"></i></span>{{/buildings}}'
         let builderTemplate = '{{#buildings}}<span class="builder-building-container"><i class="builder-icon {{iconClass}}"></i><span>{{label}}</span><div class="builder-description">{{description}}</div><div class="builder-cost">Cost:{{#costs}} <span class="builder-cost">{{quantity}} <i class="{{iconClass}}"></i> {{supply}}</span>{{/costs}}</div><button class="btn btn-sm btn-secondary build-building-button" data-label="{{label}}">Build</button></span>{{/buildings}}'
-        let iteration = 0
 
         Mustache.parse(supplyPileTemplate)
         Mustache.parse(townTemplate)
         Mustache.parse(builderTemplate)
 
+        // region Websocket
+
+        function connect() {
+            const socket = new SockJS('/gs-guide-websocket')
+
+            stompClient = Stomp.over(socket)
+
+            stompClient.connect({}, function (frame) {
+                console.log('Connected: ' + frame)
+
+                stompClient.subscribe('/topic/game', function (message) {
+                    const dirtySupplyPiles = JSON.parse(message.body).supplyPiles
+                    updateSupplyPiles(dirtySupplyPiles)
+                })
+            })
+        }
+
+        connect()
+
+        // endregion Websocket
+
         drawSupplies()
         drawTown()
         drawBuilder()
-        tick()
-        setInterval(tick, 1000)
-
-        function tick() {
-            incrementSupplies()
-            draw()
-            iteration++
-            logIteration()
-            saveGame()
-        }
 
         function drawSupplies() {
             const supplies = {
@@ -75,11 +88,8 @@
             $suppliesRow.html(Mustache.render(supplyPileTemplate, supplies))
 
             _.each(supplyPiles, (pile) => {
-                incrementSupplyPileQuantity(pile, 0)
+                updateSupplyPileProgressBar(pile)
             })
-        }
-
-        function draw() {
         }
 
         function drawTown() {
@@ -100,50 +110,10 @@
             })
         }
 
-        function saveGame() {
-            if (iteration % 10 === 0) {
-                $.ajax({
-                    url: '/save',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({
-                        guid: [[${game.guid}]],
-                        town: town,
-                        supplyPiles: supplyPiles,
-                    }),
-                    success: () => {
-                        console.log('game saved')
-                    },
-                    error: () => {
-                        console.log('error saving the game')
-                    },
-                })
-            }
-        }
-
-        function logIteration() {
-            if (iteration % 10 === 0) {
-                console.log(`Iteration: ${iteration}`)
-                console.table(supplyPiles)
-            }
-        }
-
-        function incrementSupplies() {
-            _.each(town.buildings, (b) => {
-                if (b.produces) {
-                    _.each(b.produces, (p) => {
-                        const supplyPile = getCurrentPile(p.supply)
-                        if (supplyPile) {
-                            incrementSupplyPileQuantity(supplyPile, p.quantity)
-                        }
-                    })
-                }
+        function updateSupplyPiles(dirtySupplyPiles) {
+            _.each(dirtySupplyPiles, (p) => {
+                updateSupplyPileProgressBar(p)
             })
-        }
-
-        function incrementSupplyPileQuantity(supplyPile, quantity) {
-            supplyPile.quantity = _.clamp(supplyPile.quantity + quantity, 0, supplyPile.pileSize)
-            updateSupplyPileProgressBar(supplyPile)
         }
 
         function updateSupplyPileProgressBar(supplyPile) {

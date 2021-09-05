@@ -1,31 +1,33 @@
-package com.flatts.township.configs;
+package com.flatts.township.configs
 
-import com.mongodb.ConnectionString;
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
-import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.EnableScheduling
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
+import com.mongodb.client.MongoClient
+import com.mongodb.ConnectionString
+import com.mongodb.MongoClientSettings
+import com.mongodb.client.MongoClients
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import kotlin.Throws
+import org.springframework.data.mongodb.core.MongoTemplate
+import java.lang.Exception
 
 @Configuration
 @EnableScheduling
-@EnableMongoRepositories(basePackages = "com.flatts.township.repositories")
-public class MongoConfig {
+@EnableMongoRepositories(basePackages = ["com.flatts.township.repositories"])
+class MongoConfig {
     @Bean
-    public MongoClient mongo() {
-        ConnectionString connectionString = new ConnectionString("mongodb://localhost:27017/township");
-        MongoClientSettings mongoClientSettings = MongoClientSettings.builder()
-                .applyConnectionString(connectionString)
-                .build();
-
-        return MongoClients.create(mongoClientSettings);
+    fun mongo(): MongoClient {
+        val connectionString = ConnectionString("mongodb://localhost:27017/township")
+        val mongoClientSettings = MongoClientSettings.builder()
+            .applyConnectionString(connectionString)
+            .build()
+        return MongoClients.create(mongoClientSettings)
     }
 
     @Bean
-    public MongoTemplate mongoTemplate() throws Exception {
-        return new MongoTemplate(mongo(), "township");
+    @Throws(Exception::class)
+    fun mongoTemplate(): MongoTemplate {
+        return MongoTemplate(mongo(), "township")
     }
 }
