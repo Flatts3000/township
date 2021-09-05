@@ -26,6 +26,7 @@ hr {
 .supply-icon, .builder-icon {
     font-size: 0.92rem;
     margin-right: 0.4rem;
+    fill: ghostwhite;
 }
 
 .progress {
@@ -62,6 +63,7 @@ hr {
 
 .building-icon {
     font-size: 2.5rem;
+    fill: ghostwhite;
 }
 
 #builder-container {
@@ -78,7 +80,19 @@ hr {
 }
 
 .builder-cost {
-    color: ghostwhite;
+    color: #f8f8ff;
     font-weight: 600;
     margin-bottom: 0.25rem;
+}
+
+img.building-icon.facus {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+img.builder-icon.facus {
+    width: 12px;
+    height: 12px;
+    object-fit: contain;
 }

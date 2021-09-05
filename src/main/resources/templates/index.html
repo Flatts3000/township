@@ -13,7 +13,6 @@
     <script src="https://unpkg.com/mustache@latest"></script>
     <script src="/webjars/sockjs-client/sockjs.min.js"></script>
     <script src="/webjars/stomp-websocket/stomp.min.js"></script>
-    <script th:src="@{/js/index.js}"></script>
 </head>
 <body>
 <table id="supplies-table">
@@ -100,6 +99,7 @@
         drawSupplies()
         drawTown()
         drawBuilder()
+        updateIcons()
 
         $('#reset-button').click(() => {
             $.post(`/reset/${[[${game.guid}]]}`, () => {
@@ -164,6 +164,26 @@
                 $bar.addClass('progress-bar-striped').addClass('progress-bar-animated').removeClass('bg-info').addClass('bg-danger').removeClass('bg-success')
             } else {
                 $bar.addClass('progress-bar-striped').addClass('progress-bar-animated').addClass('bg-info').removeClass('bg-danger').removeClass('bg-success')
+            }
+        }
+
+        function updateIcons() {
+            $('.facus').each(function () {
+                const $this = $(this)
+                const $img = $('<img>')
+
+                if ($this.hasClass('fa-pickaxe')) {
+                    $img.attr('src', '../images/pickaxe.png')
+                    mergeClasses($this, $img)
+                    $img.insertAfter($this)
+                    $this.remove()
+                }
+            })
+
+            function mergeClasses($this, $svg) {
+                _.each($this.attr('class').split(/\s+/), (c) => {
+                    $svg.addClass(c)
+                })
             }
         }
     })
