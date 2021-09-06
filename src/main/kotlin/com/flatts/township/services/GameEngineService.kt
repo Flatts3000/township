@@ -1,8 +1,6 @@
 package com.flatts.township.services
 
-import com.flatts.township.models.BuildingImpl
-import com.flatts.township.models.GameImpl
-import com.flatts.township.models.SupplyPileImpl
+import com.flatts.township.models.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
@@ -35,7 +33,6 @@ class GameEngineService(private val gameService: GameService, private val messag
     fun build(guid: String, label: String): Boolean {
         val game = findGame(guid) ?: return false
         val building = buildingService.findBuilding(label) ?: return false
-        val population = gameService.getPopulation(game)
         val dirtyPiles = mutableSetOf<SupplyPileImpl>()
 
         // Validate that all costs can be paid.
@@ -53,17 +50,8 @@ class GameEngineService(private val gameService: GameService, private val messag
             pile.updateQuantity(-it.quantity)
         }
 
-        // Create a building.
-        game.towns.first().buildings[building.label] = Math.addExact(1, game.towns.first().buildings[building.label] ?: 0)
-
-        // Unlock stuff.
-        unlockObjects(game, building)
-
-        val newPop = gameService.getPopulation(game)
-
+        game.constructionQueue.offer(ConstructionImpl(building))
         messageService.sendSupplyUpdateMessage(dirtyPiles)
-        messageService.sendNewBuildingMessage(building)
-        if (newPop != population) messageService.sendNewPopulationMessage(newPop)
 
         return true
     }
@@ -71,6 +59,20 @@ class GameEngineService(private val gameService: GameService, private val messag
     private fun tick(game: GameImpl) {
         log.info("Ticking game: {}", game)
         tickSupplyPiles(game)
+        tickConstructionQueue(game)
+    }
+
+    private fun tickConstructionQueue(game: GameImpl) {
+        val current = game.constructionQueue.peek() ?: return
+        
+        current.tick()
+
+        if (current.isCompleted()) {
+            constructBuilding(game, current.label)
+            game.constructionQueue.remove(current)
+        }
+
+        messageService.sendBuilderUpdateMessage(current)
     }
 
     private fun tickSupplyPiles(game: GameImpl) {
@@ -128,6 +130,22 @@ class GameEngineService(private val gameService: GameService, private val messag
                 }
             }
         }
+    }
+
+    private fun constructBuilding(game: GameImpl, label: String) {
+        val building = buildingService.findBuilding(label) ?: return
+        val population = gameService.getPopulation(game)
+
+        // Create a building.
+        game.towns.first().buildings.merge(building.label, 1) { a, b -> a + b }
+
+        // Unlock stuff.
+        unlockObjects(game, building)
+
+        val newPop = gameService.getPopulation(game)
+
+        messageService.sendNewBuildingMessage(building)
+        if (newPop != population) messageService.sendNewPopulationMessage(newPop)
     }
 
     private fun findGame(guid: String): GameImpl? {

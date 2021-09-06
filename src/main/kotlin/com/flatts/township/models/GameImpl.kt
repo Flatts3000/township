@@ -5,6 +5,7 @@ import java.io.Serializable
 import java.time.Instant
 
 class GameImpl : Game, Serializable {
+    override var constructionQueue = ConstructionQueue()
     override var builder: MutableList<String> = mutableListOf()
     override var created: Instant = Instant.now()
     override var guid: String = ""
@@ -13,5 +14,12 @@ class GameImpl : Game, Serializable {
     override var towns: MutableList<TownImpl> = mutableListOf()
     override fun toString(): String {
         return "GameImpl(guid='$guid',created='$created')"
+    }
+    
+    fun inherit(o: GameImpl) {
+        this.constructionQueue = o.constructionQueue
+        this.builder = o.builder
+        this.supplyPiles = o.supplyPiles
+        this.towns = o.towns
     }
 }

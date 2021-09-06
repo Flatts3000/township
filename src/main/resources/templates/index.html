@@ -68,6 +68,7 @@
                               '{{/description2}}' +
                               '<div class="builder-cost">Cost:{{#costs}} <span class="builder-cost">{{quantity}} <i class="{{iconClass}}"></i> {{supply}}</span>{{/costs}}</div>' +
                               '<button class="btn btn-sm btn-secondary build-building-button" data-label="{{label}}">Build</button>' +
+                              '<span id="{{label}}-builder-progress" class="building-progress-container ml-2" style="display: none">Waiting</span>' +
                               '</div>' +
                               '</span>' +
                               '</span>' +
@@ -108,6 +109,9 @@
                             break
                         case 'NewPopulationUpdate':
                             $population.html(`${message.pop} Population`)
+                            break
+                        case 'BuilderUpdate':
+                            updateBuilder(message.current)
                             break
                     }
 
@@ -165,7 +169,11 @@
             $builderContainer.html(Mustache.render(builderTemplate, {buildings: builder}))
 
             $('.build-building-button').click(function () {
-                $.post(`/build/${[[${game.guid}]]}?label=${$(this).data('label')}`)
+                const label = $(this).data('label')                
+                $.post(`/build/${[[${game.guid}]]}?label=${label}`, () => {
+                    const progress = $(`#${label}-builder-progress`)
+                    progress.show()
+                })
             })
         }
 
@@ -188,6 +196,18 @@
                 $bar.addClass('progress-bar-striped').addClass('progress-bar-animated').removeClass('bg-info').addClass('bg-danger').removeClass('bg-success')
             } else {
                 $bar.addClass('progress-bar-striped').addClass('progress-bar-animated').addClass('bg-info').removeClass('bg-danger').removeClass('bg-success')
+            }
+        }
+
+        function updateBuilder(construction) {
+            const progress = $(`#${construction.label}-builder-progress`)
+
+            if (construction.progress !== construction.duration) {
+                progress.html(`${construction.progress} / ${construction.duration}`)
+                progress.show()
+            } else {
+                progress.html(`Waiting`)
+                progress.hide()
             }
         }
 

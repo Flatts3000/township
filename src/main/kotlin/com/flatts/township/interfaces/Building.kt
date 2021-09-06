@@ -4,6 +4,7 @@ import com.flatts.township.models.SupplyMarkerImpl
 import com.flatts.township.models.UnlockMarkerImpl
 
 interface Building {
+    var buildDuration: Int
     var label: String
     var iconClass: String
     var costs: Set<SupplyMarkerImpl>

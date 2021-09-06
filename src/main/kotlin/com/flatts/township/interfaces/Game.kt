@@ -1,5 +1,6 @@
 package com.flatts.township.interfaces
 
+import com.flatts.township.models.ConstructionQueue
 import com.flatts.township.models.SupplyPileImpl
 import com.flatts.township.models.TownImpl
 import java.time.Instant
@@ -11,4 +12,5 @@ interface Game {
     var id: String
     var supplyPiles: MutableList<SupplyPileImpl>
     var towns: MutableList<TownImpl>
+    var constructionQueue: ConstructionQueue
 }

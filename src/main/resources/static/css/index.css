@@ -131,3 +131,14 @@ img.builder-icon.facus {
     flex-direction: column;
     text-align: center;
 }
+
+.building-progress-container {
+    background-color: #444444;
+    border-radius: .2rem;
+    border: 1px solid #6c757d;
+    color: #fff;
+    display: inline-block;
+    font-size: .875rem;
+    height: 31px;
+    padding: .25rem .5rem;
+}

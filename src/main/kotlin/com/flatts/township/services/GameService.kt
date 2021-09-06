@@ -46,9 +46,7 @@ class GameService(private val gameRepository: GameRepository, private val supply
             return
         }
 
-        existingGame.towns = game.towns
-        existingGame.builder = game.builder
-        existingGame.supplyPiles = game.supplyPiles
+        existingGame.inherit(game)
 
         gameRepository.save(existingGame)
     }

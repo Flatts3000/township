@@ -3,6 +3,7 @@ package com.flatts.township.models
 import com.flatts.township.interfaces.Building
 
 class BuildingImpl : Building {
+    override var buildDuration: Int = 0
     override var label: String = ""
     override var description: String = ""
     override var description2: String = ""

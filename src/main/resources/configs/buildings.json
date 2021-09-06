@@ -5,6 +5,7 @@
     "iconClass": "fas fa-campground",
     "description": "Provides 2 population",
     "description2": "Consumes 2 food",
+    "buildDuration": 60,
     "unlocked": true,
     "costs": [
       {
@@ -31,6 +32,7 @@
     "label": "Farm",
     "iconClass": "fas fa-water",
     "description": "Produces 2 food",
+    "buildDuration": 30,
     "unlocked": true,
     "costs": [
       {
@@ -51,6 +53,7 @@
     "label": "Woodcutter",
     "iconClass": "fas fa-stream",
     "description": "Produces 1 wood",
+    "buildDuration": 60,
     "unlocks": [
       {
         "type": "building",
@@ -82,6 +85,7 @@
     "label": "Stonecutter",
     "iconClass": "facus fa-pickaxe",
     "description": "Produces 1 stone",
+    "buildDuration": 60,
     "unlocks": [
       {
         "type": "supply",

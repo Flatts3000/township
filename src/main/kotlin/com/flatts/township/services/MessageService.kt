@@ -2,6 +2,7 @@ package com.flatts.township.services
 
 import com.flatts.township.dtos.*
 import com.flatts.township.models.BuildingImpl
+import com.flatts.township.models.ConstructionImpl
 import com.flatts.township.models.SupplyPileImpl
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.stereotype.Service
@@ -26,5 +27,9 @@ class MessageService(private val template: SimpMessagingTemplate) {
 
     fun sendNewPopulationMessage(pop: Int) {
         this.template.convertAndSend("/topic/game", NewPopulationUpdateDTO(pop))
+    }
+
+    fun sendBuilderUpdateMessage(current: ConstructionImpl) {
+        this.template.convertAndSend("/topic/game", BuilderUpdateDTO(current))
     }
 }
