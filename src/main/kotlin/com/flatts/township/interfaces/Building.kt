@@ -10,6 +10,7 @@ interface Building {
     var produces: Set<SupplyMarkerImpl>
     var unlocked: Boolean
     var description: String
+    var description2: String
     var consumes: Set<SupplyMarkerImpl>
     var unlocks: Set<UnlockMarkerImpl>
 }

@@ -25,6 +25,7 @@ class HomeController(private val gameService: GameService, private val supplySer
         gameEngineService.addGame(game)
         model.addAttribute("game", game)
         model.addAttribute("town", game.towns.first())
+        model.addAttribute("population", gameService.getPopulation(game))
         model.addAttribute("supplyMap", supplyService.getSupplies())
         model.addAttribute("buildingMap", buildingService.getBuildings())
         return "index"

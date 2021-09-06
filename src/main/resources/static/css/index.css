@@ -10,12 +10,6 @@ hr {
     border-color: ghostwhite;
 }
 
-#supplies-row > td {
-    width: 125px;
-    padding: 0.75rem;
-    text-align: center;
-}
-
 .supply-header {
     padding-bottom: 0.25rem;
     text-align: left;
@@ -45,6 +39,30 @@ hr {
     bottom: 0;
 }
 
+#population-container {
+    width: 100%;
+    padding-top: 0.5rem;
+    padding-left: 1rem;
+    padding-bottom: 0.5rem;
+}
+
+#population {
+    font-weight: 550;
+    font-size: 0.9rem;
+}
+
+#supplies-container {
+    width: 100%;
+    padding-left: 1rem;
+    padding-bottom: 0.5rem;
+}
+
+.supply-pile-container {
+    width: 125px;
+    margin-right: 1rem;
+    text-align: center;
+}
+
 #town-container {
     width: 100%;
     padding: 1rem;
@@ -71,12 +89,17 @@ hr {
 }
 
 .builder-building-container {
-    width: 200px;
+    min-width: 175px;
+    margin-right: 1rem;
+    border-radius: 5px;
+    border: ghostwhite 1px solid;
+    padding: 0.5rem;
 }
 
 .builder-description, .builder-cost {
     color: #999999;
     font-size: 0.75rem;
+    white-space: nowrap;
 }
 
 .builder-cost {
@@ -92,7 +115,19 @@ img.building-icon.facus {
 }
 
 img.builder-icon.facus {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     object-fit: contain;
+}
+
+.jobs-label {
+    font-size: 0.8rem;
+}
+
+.job-count-label {
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    flex-direction: column;
+    text-align: center;
 }

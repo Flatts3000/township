@@ -20,7 +20,7 @@ class GameService(private val gameRepository: GameRepository, private val supply
         if (game != null) {
             return game
         }
-        
+
         createGame()
 
         return findGame(defaultId)
@@ -56,5 +56,18 @@ class GameService(private val gameRepository: GameRepository, private val supply
     fun resetGame(game: GameImpl) {
         log.info("Resetting game: {}", game)
         gameRepository.deleteByGuid(game.guid)
+    }
+
+    fun getPopulation(game: GameImpl): Int {
+        var i = 0
+        game.towns.forEach { town ->
+            town.buildings.forEach { b ->
+                val building = buildingService.findBuilding(b.key)
+                building?.produces?.forEach { p ->
+                    if (p.supply == "Population") i += p.quantity.toInt() * b.value
+                }
+            }
+        }
+        return i
     }
 }

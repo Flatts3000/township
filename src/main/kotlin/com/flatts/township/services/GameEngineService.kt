@@ -35,6 +35,7 @@ class GameEngineService(private val gameService: GameService, private val messag
     fun build(guid: String, label: String): Boolean {
         val game = findGame(guid) ?: return false
         val building = buildingService.findBuilding(label) ?: return false
+        val population = gameService.getPopulation(game)
         val dirtyPiles = mutableSetOf<SupplyPileImpl>()
 
         // Validate that all costs can be paid.
@@ -58,8 +59,11 @@ class GameEngineService(private val gameService: GameService, private val messag
         // Unlock stuff.
         unlockObjects(game, building)
 
+        val newPop = gameService.getPopulation(game)
+
         messageService.sendSupplyUpdateMessage(dirtyPiles)
         messageService.sendNewBuildingMessage(building)
+        if (newPop != population) messageService.sendNewPopulationMessage(newPop)
 
         return true
     }

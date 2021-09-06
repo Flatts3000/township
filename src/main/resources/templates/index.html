@@ -15,20 +15,14 @@
     <script src="/webjars/stomp-websocket/stomp.min.js"></script>
 </head>
 <body>
-<table id="supplies-table">
-    <tbody>
-    <tr id="supplies-row"></tr>
-    </tbody>
-</table>
-<hr/>
-<div id="town-container" class="d-flex flex-wrap">
+<div id="population-container" class="d-flex flex-wrap">
+    <span id="population">[[${population}]] Population</span>
 </div>
+<div id="supplies-container" class="d-flex flex-wrap"></div>
 <hr/>
-<div id="builder-container" class="d-flex flex-wrap">
-</div>
+<div id="town-container" class="d-flex flex-wrap"></div>
 <hr/>
-<div id="jobs-container" class="d-flex flex-wrap">
-</div>
+<div id="builder-container" class="d-flex flex-wrap"></div>
 <hr/>
 <div class="pl-2">
     <button id="reset-button" class="btn btn-danger">Reset</button>
@@ -44,15 +38,40 @@
     const town = [[${town.buildings}]]
 
     $(() => {
-        const $suppliesRow = $('#supplies-row')
+        const $suppliesContainer = $('#supplies-container')
         const $townContainer = $('#town-container')
         const $builderContainer = $('#builder-container')
+        const $population = $('#population')
         const numberFormatter = new Intl.NumberFormat()
 
         let stompClient = null
-        let supplyPileTemplate = '{{#supplies}}<td><div class="supply-header"><i class="supply-icon {{supply.iconClass}}"></i>{{supply.label}}</div><div class="progress"><div id="{{supply.label}}-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-info" role="progressbar" aria-valuemin="0" aria-valuemax="{{pileSize}}"></div><span></span></div></td>{{/supplies}}'
+        let supplyPileTemplate = '{{#supplies}}<span class="supply-pile-container"><div class="supply-header"><i class="supply-icon {{supply.iconClass}}"></i>{{supply.label}}</div><div class="progress"><div id="{{supply.label}}-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-info" role="progressbar" aria-valuemin="0" aria-valuemax="{{pileSize}}"></div><span></span></div></span>{{/supplies}}'
         let townTemplate = '{{#buildings}}<span class="town-building" title="{{label}}"><i class="building-icon {{iconClass}}"></i></span>{{/buildings}}'
-        let builderTemplate = '{{#buildings}}<span class="builder-building-container"><i class="builder-icon {{iconClass}}"></i><span>{{label}}</span><div class="builder-description">{{description}}</div><div class="builder-cost">Cost:{{#costs}} <span class="builder-cost">{{quantity}} <i class="{{iconClass}}"></i> {{supply}}</span>{{/costs}}</div><button class="btn btn-sm btn-secondary build-building-button" data-label="{{label}}">Build</button></span>{{/buildings}}'
+
+        let builderTemplate = '{{#buildings}}' +
+                              '<span class="builder-building-container">' +
+                              '<div>' +
+                              '<i class="builder-icon {{iconClass}}"></i>' +
+                              '<span>{{label}}</span>' +
+                              '</div>' +
+                              '<span class="d-flex flex-row">' +
+                              '<div class="d-flex flex-column pr-2">' +
+                              '<div class="jobs-label text-center">Jobs</div>' +
+                              '<div class="text-center"><button class="btn btn-sm btn-secondary job-count-button" data-up="true"><i class="fas fa-caret-up"></i></button></div>' +
+                              '<div class="flex-grow-1 job-count-label">88/88</div>' +
+                              '<div class="text-center"><button class="btn btn-sm btn-secondary job-count-button" data-up="false"><i class="fas fa-caret-down"></i></button></div>' +
+                              '</div>' +
+                              '<div class="flex-grow-1">' +
+                              '<div class="builder-description">{{description}}</div>' +
+                              '{{#description2}}' +
+                              '<div class="builder-description">{{description2}}</div>' +
+                              '{{/description2}}' +
+                              '<div class="builder-cost">Cost:{{#costs}} <span class="builder-cost">{{quantity}} <i class="{{iconClass}}"></i> {{supply}}</span>{{/costs}}</div>' +
+                              '<button class="btn btn-sm btn-secondary build-building-button" data-label="{{label}}">Build</button>' +
+                              '</div>' +
+                              '</span>' +
+                              '</span>' +
+                              '{{/buildings}}'
 
         Mustache.parse(supplyPileTemplate)
         Mustache.parse(townTemplate)
@@ -87,6 +106,9 @@
                             supplyPiles.push(message.supplyPile)
                             drawSupplies()
                             break
+                        case 'NewPopulationUpdate':
+                            $population.html(`${message.pop} Population`)
+                            break
                     }
 
                     updateIcons()
@@ -114,7 +136,7 @@
                 supplies: _.sortBy(supplyPiles, (p) => {return p.supply.order}),
             }
 
-            $suppliesRow.html(Mustache.render(supplyPileTemplate, supplies))
+            $suppliesContainer.html(Mustache.render(supplyPileTemplate, supplies))
 
             _.each(supplyPiles, (pile) => {
                 updateSupplyPileProgressBar(pile)
@@ -173,18 +195,23 @@
             $('i.facus').each(function () {
                 const $this = $(this)
                 const $img = $('<img>')
-
-                if ($this.hasClass('fa-pickaxe')) {
-                    $img.attr('src', '../images/pickaxe.png')
-                    mergeClasses($this, $img)
-                    $img.insertAfter($this)
-                    $this.remove()
-                }
+                getSrc($this, $img)
+                mergeClasses($this, $img)
+                $img.insertAfter($this)
+                $this.remove()
             })
 
-            function mergeClasses($this, $svg) {
+            function mergeClasses($this, $img) {
                 _.each($this.attr('class').split(/\s+/), (c) => {
-                    $svg.addClass(c)
+                    $img.addClass(c)
+                })
+            }
+
+            function getSrc($this, $img) {
+                _.each($this.attr('class').split(/\s+/), (c) => {
+                    if (c.startsWith('fa-')) {
+                        $img.attr('src', `../images/${_.trimStart(c, 'fa-')}.png`)
+                    }
                 })
             }
         }

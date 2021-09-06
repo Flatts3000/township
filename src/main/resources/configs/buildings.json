@@ -3,7 +3,8 @@
     "level": 0,
     "label": "Tent",
     "iconClass": "fas fa-campground",
-    "description": "Consumes 2 food",
+    "description": "Provides 2 population",
+    "description2": "Consumes 2 food",
     "unlocked": true,
     "costs": [
       {

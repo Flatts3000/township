@@ -9,7 +9,5 @@ interface Town {
     var constructions: MutableList<ConstructionImpl>
     var guid: String
     var jobs: MutableSet<JobImpl>
-    var population: Int
-    var populationLimit: Int
     var resources: MutableMap<String, Int>
 }

@@ -1,9 +1,6 @@
 package com.flatts.township.services
 
-import com.flatts.township.dtos.NewBuilderUpdateDTO
-import com.flatts.township.dtos.NewBuildingUpdateDTO
-import com.flatts.township.dtos.NewSupplyUpdateDTO
-import com.flatts.township.dtos.SupplyPileUpdateDTO
+import com.flatts.township.dtos.*
 import com.flatts.township.models.BuildingImpl
 import com.flatts.township.models.SupplyPileImpl
 import org.springframework.messaging.simp.SimpMessagingTemplate
@@ -25,5 +22,9 @@ class MessageService(private val template: SimpMessagingTemplate) {
 
     fun sendNewSupplyMessage(supplyPile: SupplyPileImpl) {
         this.template.convertAndSend("/topic/game", NewSupplyUpdateDTO(supplyPile))
+    }
+
+    fun sendNewPopulationMessage(pop: Int) {
+        this.template.convertAndSend("/topic/game", NewPopulationUpdateDTO(pop))
     }
 }
