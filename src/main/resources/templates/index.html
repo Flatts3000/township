@@ -36,6 +36,10 @@
     const supplyPiles = [[${game.supplyPiles}]]
     const buildings = [[${game.builder}]]
     const town = [[${town.buildings}]]
+    const jobs = [[${town.jobs}]]
+    const jobLimits = [[${town.jobLimits}]]
+
+    let population = [[${population}]]
 
     $(() => {
         const $suppliesContainer = $('#supplies-container')
@@ -49,17 +53,19 @@
         let townTemplate = '{{#buildings}}<span class="town-building" title="{{label}}"><i class="building-icon {{iconClass}}"></i></span>{{/buildings}}'
 
         let builderTemplate = '{{#buildings}}' +
-                              '<span class="builder-building-container">' +
+                              '<span id="{{label}}-builder-container" class="builder-building-container">' +
                               '<div>' +
                               '<i class="builder-icon {{iconClass}}"></i>' +
                               '<span>{{label}}</span>' +
                               '</div>' +
                               '<span class="d-flex flex-row">' +
                               '<div class="d-flex flex-column pr-2">' +
+                              '{{#job}}' +
                               '<div class="jobs-label text-center">Jobs</div>' +
-                              '<div class="text-center"><button class="btn btn-sm btn-secondary job-count-button" data-up="true"><i class="fas fa-caret-up"></i></button></div>' +
-                              '<div class="flex-grow-1 job-count-label">88/88</div>' +
-                              '<div class="text-center"><button class="btn btn-sm btn-secondary job-count-button" data-up="false"><i class="fas fa-caret-down"></i></button></div>' +
+                              '<div class="text-center"><button class="btn btn-sm btn-secondary job-count-button" data-up="true" data-label="{{label}}"><i class="fas fa-caret-up"></i></button></div>' +
+                              '<div class="flex-grow-1 job-count-label">{{jobs}}/{{jobLimit}}</div>' +
+                              '<div class="text-center"><button class="btn btn-sm btn-secondary job-count-button" data-up="false" data-label="{{label}}"><i class="fas fa-caret-down"></i></button></div>' +
+                              '{{/job}}' +
                               '</div>' +
                               '<div class="flex-grow-1">' +
                               '<div class="builder-description">{{description}}</div>' +
@@ -97,17 +103,20 @@
                             break
                         case 'NewBuildingUpdate':
                             town[message.building.label] = (town[message.building.label] ? town[message.building.label] : 0) + 1
+                            jobLimits[message.building.label] = message.jobLimit
                             drawTown()
+                            drawSingleBuilder(message.building.label)
                             break
                         case 'NewBuilderUpdate':
                             buildings.push(message.building.label)
-                            drawBuilder()
+                            drawSingleBuilder(message.building.label)
                             break
                         case 'NewSupplyUpdate':
                             supplyPiles.push(message.supplyPile)
                             drawSupplies()
                             break
                         case 'NewPopulationUpdate':
+                            population = message.pop
                             $population.html(`${message.pop} Population`)
                             break
                         case 'BuilderUpdate':
@@ -128,6 +137,34 @@
         drawTown()
         drawBuilder()
         updateIcons()
+
+        $builderContainer.on('click', '.job-count-button', function () {
+            const $this = $(this)
+            const change = $this.data('up') ? 1 : -1
+            const label = $this.data('label')
+            const jobLimit = _.toNumber(jobLimits[label] ? jobLimits[label] : 0)
+
+            let jobCount = _.toNumber(jobs[label] ? jobs[label] : 0)
+            let newJobCount = _.clamp(change + jobCount, 0, jobLimit)
+            let totalJobCount = getJobCount()
+
+            if (totalJobCount + change > population) return
+
+            if (newJobCount !== jobCount) {
+                jobs[label] = newJobCount
+                drawSingleBuilder(label)
+                updateIcons()
+                $.post(`/updateJob/${[[${game.guid}]]}?label=${label}&quantity=${newJobCount}`)
+            }
+        })
+
+        $builderContainer.on('click', '.build-building-button', function () {
+            const label = $(this).data('label')
+            $.post(`/build/${[[${game.guid}]]}?label=${label}`, () => {
+                const progress = $(`#${label}-builder-progress`)
+                progress.show()
+            })
+        })
 
         $('#reset-button').click(() => {
             $.post(`/reset/${[[${game.guid}]]}`, () => {
@@ -152,7 +189,10 @@
 
             _.each(town, (v, k) => {
                 for (let i = 0; i < v; i++) {
-                    buildings.push(buildingMap[k])
+                    let building = buildingMap[k]
+                    building.jobs = jobs[k] ? jobs[k] : 0
+                    building.jobLimit = jobLimits[k] ? jobLimits[k] : 0
+                    buildings.push(building)
                 }
             })
 
@@ -163,18 +203,34 @@
             const builder = []
 
             _.each(buildings, (k) => {
-                builder.push(buildingMap[k])
+                let building = buildingMap[k]
+                building.jobs = jobs[k] ? jobs[k] : 0
+                building.jobLimit = jobLimits[k] ? jobLimits[k] : 0
+                builder.push(building)
             })
 
             $builderContainer.html(Mustache.render(builderTemplate, {buildings: builder}))
+        }
 
-            $('.build-building-button').click(function () {
-                const label = $(this).data('label')                
-                $.post(`/build/${[[${game.guid}]]}?label=${label}`, () => {
-                    const progress = $(`#${label}-builder-progress`)
-                    progress.show()
-                })
+        function drawSingleBuilder(label) {
+            const builder = []
+
+            _.each(buildings, (k) => {
+                if (k === label) {
+                    let building = buildingMap[k]
+                    building.jobs = jobs[k] ? jobs[k] : 0
+                    building.jobLimit = jobLimits[k] ? jobLimits[k] : 0
+                    builder.push(building)
+                }
             })
+
+            const oldBuilder = $(`#${label}-builder-container`)
+            
+            if (oldBuilder.length) {
+                oldBuilder.replaceWith(Mustache.render(builderTemplate, {buildings: builder}))
+            } else {
+                $builderContainer.append(Mustache.render(builderTemplate, {buildings: builder}))
+            }
         }
 
         function updateSupplyPiles(dirtySupplyPiles) {
@@ -234,6 +290,14 @@
                     }
                 })
             }
+        }
+
+        function getJobCount() {
+            let i = 0
+            _.each(jobs, (v) => {
+                i += v
+            })
+            return i
         }
     })
 </script>

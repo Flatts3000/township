@@ -1,7 +1,8 @@
 package com.flatts.township.interfaces
 
+import com.flatts.township.models.SupplyMarkerImpl
+
 interface Job {
-    var label: String
-    var quantity: Int
     var limit: Int
+    var produces: Set<SupplyMarkerImpl>
 }

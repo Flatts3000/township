@@ -13,8 +13,8 @@ class MessageService(private val template: SimpMessagingTemplate) {
         this.template.convertAndSend("/topic/game", SupplyPileUpdateDTO(dirtySupplyPiles))
     }
 
-    fun sendNewBuildingMessage(building: BuildingImpl) {
-        this.template.convertAndSend("/topic/game", NewBuildingUpdateDTO(building))
+    fun sendNewBuildingMessage(building: BuildingImpl, jobLimit: Int) {
+        this.template.convertAndSend("/topic/game", NewBuildingUpdateDTO(building, jobLimit))
     }
 
     fun sendNewBuilderMessage(building: BuildingImpl) {

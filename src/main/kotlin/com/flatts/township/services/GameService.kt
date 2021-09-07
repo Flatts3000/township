@@ -61,9 +61,7 @@ class GameService(private val gameRepository: GameRepository, private val supply
         game.towns.forEach { town ->
             town.buildings.forEach { b ->
                 val building = buildingService.findBuilding(b.key)
-                building?.produces?.forEach { p ->
-                    if (p.supply == "Population") i += p.quantity.toInt() * b.value
-                }
+                if (building?.population != null) i += building.population!! * b.value
             }
         }
         return i

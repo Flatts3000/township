@@ -2,6 +2,7 @@ package com.flatts.township.services
 
 import com.flatts.township.interfaces.Building
 import com.flatts.township.models.BuildingImpl
+import com.flatts.township.models.JobImpl
 import com.flatts.township.models.TownImpl
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -47,13 +48,19 @@ class BuildingService {
         return buildingsMap[label]
     }
 
+    fun findJob(label: String): JobImpl? {
+        return buildingsMap[label]?.job
+    }
+
     fun buildTowns(): MutableList<TownImpl> {
         val list = mutableListOf<TownImpl>()
         val town = TownImpl()
 
         town.buildings["Farm"] = 1
         town.buildings["Tent"] = 1
-
+        town.jobs["Farm"] = 1
+        town.jobLimits["Farm"] = 2
+        
         list.add(town)
 
         return list

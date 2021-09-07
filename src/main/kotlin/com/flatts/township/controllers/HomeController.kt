@@ -39,6 +39,14 @@ class HomeController(private val gameService: GameService, private val supplySer
         return ResponseEntity(false, HttpStatus.INTERNAL_SERVER_ERROR)
     }
 
+    @PostMapping("/updateJob/{guid}")
+    fun updateJob(@PathVariable guid: String, @RequestParam label: String, @RequestParam quantity: Int): ResponseEntity<Boolean> {
+        if (gameEngineService.setJobQuantity(guid, label, quantity)) {
+            return ResponseEntity(true, HttpStatus.OK)
+        }
+        return ResponseEntity(false, HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+
     @PostMapping("/reset/{guid}")
     fun reset(@PathVariable guid: String): ResponseEntity<Boolean> {
         val game = gameService.findGame(gameService.defaultId)

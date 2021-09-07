@@ -7,6 +7,7 @@ class TownImpl : Town {
     override var buildings: MutableMap<String, Int> = mutableMapOf()
     override var constructions: MutableList<ConstructionImpl> = mutableListOf()
     override var guid: String = ""
-    override var jobs: MutableSet<JobImpl> = mutableSetOf()
+    override var jobLimits: MutableMap<String, Int> = mutableMapOf()
+    override var jobs: MutableMap<String, Int> = mutableMapOf()
     override var resources: MutableMap<String, Int> = mutableMapOf()
 }

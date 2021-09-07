@@ -7,7 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
 @Service
-class GameEngineService(private val gameService: GameService, private val messageService: MessageService, private val buildingService: BuildingService, private val supplyService: SupplyService) {
+class GameEngineService(private val gameService: GameService, private val messageService: MessageService, private val buildingService: BuildingService, private val supplyService: SupplyService, val townService: TownService) {
     private val runningGames = mutableMapOf<String, GameImpl>()
 
     companion object {
@@ -56,15 +56,73 @@ class GameEngineService(private val gameService: GameService, private val messag
         return true
     }
 
+    fun setJobQuantity(guid: String, label: String, quantity: Int): Boolean {
+        if (quantity < 0) return false
+        
+        val game = findGame(guid) ?: return false
+        val building = buildingService.findBuilding(label) ?: return false
+        val town = game.towns.first()
+        val currentJobCount = town.jobs[label] ?: 0
+        val jobLimit = town.jobLimits[label] ?: return false
+        val population = gameService.getPopulation(game)
+        val currentTotalJobCount = townService.getTotalJobCount(game)
+        val change = quantity - currentJobCount
+
+        if (quantity > jobLimit) return false
+        if (currentTotalJobCount + change > population) return false    
+        
+        town.jobs[label] = quantity
+        
+        return true
+    }
+
     private fun tick(game: GameImpl) {
         log.info("Ticking game: {}", game)
-        tickSupplyPiles(game)
+        tickSupplies(game)
         tickConstructionQueue(game)
+    }
+
+    private fun tickSupplies(game: GameImpl) {
+        for (town in game.towns) {
+            val dirtySupplyPiles: MutableMap<SupplyPileImpl, Double> = mutableMapOf()
+
+            town.buildings.forEach { kvp ->
+                val building = buildingService.findBuilding(kvp.key) ?: return@forEach
+
+                for (marker in building.consumes) {
+                    val pile = findSupplyPile(game, marker.supply)
+
+                    if (pile != null) {
+                        val a = -marker.quantity * kvp.value
+                        dirtySupplyPiles.merge(pile, a) { b, c -> b + c }
+                    }
+                }
+            }
+
+            town.jobs.forEach { kvp ->
+                val job = buildingService.findJob(kvp.key) ?: return@forEach
+
+                for (marker in job.produces) {
+                    val pile = findSupplyPile(game, marker.supply)
+
+                    if (pile != null) {
+                        val a = marker.quantity * kvp.value
+                        dirtySupplyPiles.merge(pile, a) { b, c -> b + c }
+                    }
+                }
+            }
+
+            dirtySupplyPiles.forEach { x ->
+                x.key.updateQuantity(x.value)
+            }
+
+            if (dirtySupplyPiles.isNotEmpty()) messageService.sendSupplyUpdateMessage(dirtySupplyPiles.keys)
+        }
     }
 
     private fun tickConstructionQueue(game: GameImpl) {
         val current = game.constructionQueue.peek() ?: return
-        
+
         current.tick()
 
         if (current.isCompleted()) {
@@ -73,42 +131,6 @@ class GameEngineService(private val gameService: GameService, private val messag
         }
 
         messageService.sendBuilderUpdateMessage(current)
-    }
-
-    private fun tickSupplyPiles(game: GameImpl) {
-        game.towns.forEach {
-            val dirtySupplyPiles = mutableSetOf<SupplyPileImpl>()
-            val pileMap: MutableMap<SupplyPileImpl, Double> = mutableMapOf()
-
-            for (kvp in it.buildings) {
-                val building = buildingService.findBuilding(kvp.key) ?: continue
-
-                for (marker in building.consumes) {
-                    val pile = findSupplyPile(game, marker.supply)
-
-                    if (pile != null) {
-                        val a = -marker.quantity * kvp.value
-                        pileMap[pile] = a + (pileMap[pile] ?: 0.0)
-                    }
-                }
-
-                for (marker in building.produces) {
-                    val pile = findSupplyPile(game, marker.supply)
-
-                    if (pile != null) {
-                        val a = marker.quantity * kvp.value
-                        pileMap[pile] = a + (pileMap[pile] ?: 0.0)
-                    }
-                }
-            }
-
-            pileMap.forEach { x ->
-                x.key.updateQuantity(x.value)
-                dirtySupplyPiles.add(x.key)
-            }
-
-            if (dirtySupplyPiles.isNotEmpty()) messageService.sendSupplyUpdateMessage(dirtySupplyPiles)
-        }
     }
 
     private fun unlockObjects(game: GameImpl, building: BuildingImpl) {
@@ -135,16 +157,23 @@ class GameEngineService(private val gameService: GameService, private val messag
     private fun constructBuilding(game: GameImpl, label: String) {
         val building = buildingService.findBuilding(label) ?: return
         val population = gameService.getPopulation(game)
+        var jobLimit = game.towns.first().jobLimits[label] ?: 0
 
         // Create a building.
         game.towns.first().buildings.merge(building.label, 1) { a, b -> a + b }
+
+        // Add to list of jobs.
+        if (building.job != null) {
+            jobLimit += building.job!!.limit
+            game.towns.first().jobLimits[label] = jobLimit
+        }
 
         // Unlock stuff.
         unlockObjects(game, building)
 
         val newPop = gameService.getPopulation(game)
 
-        messageService.sendNewBuildingMessage(building)
+        messageService.sendNewBuildingMessage(building, jobLimit)
         if (newPop != population) messageService.sendNewPopulationMessage(newPop)
     }
 

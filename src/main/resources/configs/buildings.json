@@ -4,9 +4,10 @@
     "label": "Tent",
     "iconClass": "fas fa-campground",
     "description": "Provides 2 population",
-    "description2": "Consumes 2 food",
+    "description2": "Consumes 1 food",
     "buildDuration": 60,
     "unlocked": true,
+    "population": 2,
     "costs": [
       {
         "supply": "Wood",
@@ -14,16 +15,10 @@
         "quantity": 60
       }
     ],
-    "produces": [
-      {
-        "supply": "Population",
-        "quantity": 2
-      }
-    ],
     "consumes": [
       {
         "supply": "Food",
-        "quantity": 2
+        "quantity": 1
       }
     ]
   },
@@ -31,7 +26,7 @@
     "level": 0,
     "label": "Farm",
     "iconClass": "fas fa-water",
-    "description": "Produces 2 food",
+    "description": "Creates 2 farmer jobs",
     "buildDuration": 30,
     "unlocked": true,
     "costs": [
@@ -41,19 +36,22 @@
         "quantity": 60
       }
     ],
-    "produces": [
-      {
-        "supply": "Food",
-        "quantity": 2
-      }
-    ]
+    "job": {
+      "limit": 2,
+      "produces": [
+        {
+          "supply": "Food",
+          "quantity": 1
+        }
+      ]
+    }
   },
   {
     "level": 0,
     "label": "Woodcutter",
     "iconClass": "fas fa-stream",
-    "description": "Produces 1 wood",
-    "buildDuration": 60,
+    "description": "Creates 2 woodcutter jobs",
+    "buildDuration": 30,
     "unlocks": [
       {
         "type": "building",
@@ -73,19 +71,22 @@
         "quantity": 10
       }
     ],
-    "produces": [
-      {
-        "supply": "Wood",
-        "quantity": 1
-      }
-    ]
+    "job": {
+      "limit": 2,
+      "produces": [
+        {
+          "supply": "Wood",
+          "quantity": 1
+        }
+      ]
+    }
   },
   {
     "level": 0,
     "label": "Stonecutter",
     "iconClass": "facus fa-pickaxe",
     "description": "Produces 1 stone",
-    "buildDuration": 60,
+    "buildDuration": 50,
     "unlocks": [
       {
         "type": "supply",
@@ -104,11 +105,14 @@
         "quantity": 20
       }
     ],
-    "produces": [
-      {
-        "supply": "Stone",
-        "quantity": 1
-      }
-    ]
+    "job": {
+      "limit": 2,
+      "produces": [
+        {
+          "supply": "Stone",
+          "quantity": 1
+        }
+      ]
+    }
   }
 ]
